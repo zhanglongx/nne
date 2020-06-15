@@ -1,3 +1,8 @@
+// Copyright 2020 Longxiao Zhang <zhanglongx@gmail.com>.
+// All rights reserved.
+// Use of this source code is governed by a GPLv3-style
+// license that can be found in the LICENSE file.
+
 package main
 
 import (
@@ -53,6 +58,8 @@ func main() {
 	}
 
 	grid.SetOrientation(gtk.ORIENTATION_VERTICAL)
+	grid.SetRowSpacing(10)
+	grid.SetColumnSpacing(10)
 
 	lab1, err := gtk.LabelNew("输入起始日期, eg. 2006-01-02")
 	if err != nil {
@@ -64,6 +71,9 @@ func main() {
 		log.Fatal("Unable to create entry:", err)
 	}
 
+	grid.Attach(lab1, 0, 0, 1, 1)
+	grid.Attach(entry1, 1, 0, 1, 1)
+
 	lab2, err := gtk.LabelNew("输入截止日期, eg. 2006-01-31")
 	if err != nil {
 		log.Fatal("Unable to create label:", err)
@@ -74,7 +84,10 @@ func main() {
 		log.Fatal("Unable to create entry:", err)
 	}
 
-	lab3, err := gtk.LabelNew("输入存放目录, eg. D:\\")
+	grid.Attach(lab2, 0, 1, 1, 1)
+	grid.Attach(entry2, 1, 1, 1, 1)
+
+	lab3, err := gtk.LabelNew("输入目标文件, eg. D:\\t.csv")
 	if err != nil {
 		log.Fatal("Unable to create label:", err)
 	}
@@ -84,20 +97,28 @@ func main() {
 		log.Fatal("Unable to create entry:", err)
 	}
 
+	grid.Attach(lab3, 0, 2, 1, 1)
+	grid.Attach(entry3, 1, 2, 1, 1)
+
 	btn, err := gtk.ButtonNewWithLabel("统计")
 	if err != nil {
 		log.Fatal("Unable to create button:", err)
 	}
 
-	lab4, err := gtk.LabelNew("作者：")
+	grid.Attach(btn, 0, 3, 2, 2)
+
+	lab4, err := gtk.LabelNew("作者：zhanglongxiao@gmail.com")
 	if err != nil {
 		log.Fatal("Unable to create label:", err)
 	}
 
-	lab5, err := gtk.LabelNew("zhanglongx@gmail.com under GPL-v3")
+	lab5, err := gtk.LabelNew("Licensed under GPL-v3")
 	if err != nil {
 		log.Fatal("Unable to create label:", err)
 	}
+
+	grid.Attach(lab4, 0, 5, 2, 1)
+	grid.Attach(lab5, 0, 6, 2, 1)
 
 	btn.Connect("clicked", func() {
 		start, _ := entry1.GetText()
@@ -119,21 +140,8 @@ func main() {
 		}
 	})
 
-	grid.Add(lab1)
-	grid.Add(entry1)
-	grid.Add(lab2)
-	grid.Add(entry2)
-	grid.Add(lab3)
-	grid.Add(entry3)
-	grid.Add(btn)
-	grid.Add(lab4)
-	grid.Add(lab5)
-
 	// Add the grid to the window, and show all widgets.
 	win.Add(grid)
-
-	// Set the default window size.
-	win.SetDefaultSize(300, 300)
 
 	win.ShowAll()
 
@@ -178,11 +186,31 @@ func run(s string, e string, file string) error {
 		return err
 	}
 
-	f.WriteString(fmt.Sprintf("工号, 姓名, 补贴1, 补贴2\n"))
+	gbByte, err := utf8ToGb2312([]byte(fmt.Sprintf("工号, 姓名, 补贴1, 补贴2\n")))
+	if err != nil {
+		return err
+	}
+	f.Write(gbByte)
+
 	for id, row := range info {
-		f.WriteString(fmt.Sprintf("%d, %s, %d, %d\n",
-			id, workers[id], row.Days1, row.Days2))
+		gbByte, err := utf8ToGb2312([]byte(fmt.Sprintf("%d, %s, %d, %d\n",
+			id, workers[id], row.Days1, row.Days2)))
+		if err != nil {
+			return err
+		}
+		f.Write(gbByte)
 	}
 
 	return nil
+}
+
+func utf8ToGb2312(s []byte) ([]byte, error) {
+	// reader := transform.NewReader(bytes.NewReader(s), simplifiedchinese.HZGB2312.NewEncoder())
+	// d, e := ioutil.ReadAll(reader)
+	// if e != nil {
+	// 	return nil, e
+	// }
+	// return d, nil
+
+	return s, nil
 }
